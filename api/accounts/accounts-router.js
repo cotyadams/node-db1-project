@@ -1,8 +1,13 @@
 const router = require('express').Router()
 
+// pulling in model functions
 const { getAll, getById, create, updateById, deleteById } = require('./accounts-model');
 
+// pulling in middleware functions
 const { checkAccountPayload, checkAccountNameUnique, checkAccountId } = require('./accounts-middleware');
+
+
+// `[GET] /api/accounts` returns all accounts.
 router.get('/', async (req, res, next) => {
   // DO YOUR MAGIC
   try {
@@ -13,13 +18,15 @@ router.get('/', async (req, res, next) => {
   }
 })
 
+
+// `[GET] /api/accounts/:id` returns the account with the given id.
 router.get('/:id', checkAccountId, async (req, res, next) => {
   // DO YOUR MAGIC
   try {
     const account = await getById(req.params.id)
     res.status(200).json(account)
-  }catch {
-    res.status(500).json({ message: 'Error retrieving account' })
+  }catch (err) {
+    next(err);
   }
 })
 
@@ -33,11 +40,13 @@ router.post('/', checkAccountPayload, checkAccountNameUnique, async (req, res, n
       });
     const account = await getById(newAccountID);
     res.status(201).json(account);
-  } catch {
-    res.status(500).json({ message: 'Error creating account' })
+  } catch (err) {
+    next(err);
    }
 })
 
+
+// `[PUT] /api/accounts/:id` returns the updated account. Leading or trailing whitespace on budget `name` should be trimmed before updated in db.
 router.put('/:id', checkAccountId, checkAccountPayload, async (req, res, next) => {
   // DO YOUR MAGIC
   try { 
@@ -49,25 +58,29 @@ router.put('/:id', checkAccountId, checkAccountPayload, async (req, res, next) =
       }
     );
     res.status(200).json(updated);
-  } catch {
-    res.status(500).json({ message: 'Error updating account' })
+  } catch (err) {
+    next(err);
   }
 });
 
+
+// `[DELETE] /api/accounts/:id` returns the deleted account.
 router.delete('/:id', checkAccountId, async (req, res, next) => {
   // DO YOUR MAGIC
   try {
     const deleted = await getById(req.params.id);
     await deleteById(req.params.id);
     res.status(200).json(deleted);
-  } catch {
-    res.status(500).json({ message: 'Error deleting account' })
+  } catch (err) {
+    next(err);
    }
 })
 
+
+// Error handler middleware function
 router.use((err, req, res, next) => { // eslint-disable-line
   // DO YOUR MAGIC
-  res.status(500).json({ message: 'Error in server', error: err })
+  res.status(err.status || 500).json(err.message || 'Internal server error');
   next();
 })
 

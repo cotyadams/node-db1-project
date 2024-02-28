@@ -4,37 +4,32 @@ exports.checkAccountPayload = async (req, res, next) => {
   // DO YOUR MAGIC
   // Note: you can either write "manual" validation logic
   // or use the Yup library (not currently installed)
-  if (req.body.name.length.trim() < 3 || req.body.name.length.trim() > 100) {
-    res.status(400).json({ message: "name of account must be between 3 and 100" })
-    next();
+  let error = { status: 400 }
+  let {name, budget} = req.body;
+  if (name.trim().length < 3 || name.trim().length > 100) {
+    error.message = "name of account must be between 3 and 100" 
+    next(error);
   }
-  if (!Number(req.body.budget)) { 
-    res.status(400).json({ message: "budget of account must be a number" })
-    next();
+  else if (!Number(budget)) { 
+    error.message = "budget of account must be a number" 
+    next(error);
   }
-  if (Number(req.body.budget) < 0 || Number(req.body.budget) > 1000000) { 
-    res.status(400).json({ message: "budget of account is too large or too small" })
-    next();
+  else if (Number(budget) < 0 || Number(budget) > 1000000) { 
+    error.message = "budget of account is too large or too small"
+    next(error);
   }
-  if (
-    req.body.name &&
-    req.body.budget &&
-    typeof (req.body.name) === "string" &&
-    typeof (req.body.budget) === "number"
-  ) { 
-    next();
-  }
-  else {
-    res.status(400).json({ message: 'name and budget are required' })
-    next();
-  }
+  else if (name === undefined || budget === undefined) { 
+    error.message = "name and budget are required"
+    next(error);
+  } 
+  next();
 }
 
 exports.checkAccountNameUnique = async (req, res, next) => {
   // DO YOUR MAGIC
   if (await list.find(account => account.name === req.body.name)) {
     next({ status: 400, message: "that name is taken" })
-  }
+  } else next();
 }
 
 exports.checkAccountId = async (req, res, next) => {
