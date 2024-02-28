@@ -5,8 +5,16 @@ exports.checkAccountPayload = async (req, res, next) => {
   // Note: you can either write "manual" validation logic
   // or use the Yup library (not currently installed)
   let error = { status: 400 }
-  let {name, budget} = req.body;
-  if (name.trim().length < 3 || name.trim().length > 100) {
+  let { name, budget } = req.body;
+  if (name === undefined || budget === undefined) { 
+    error.message = "name and budget are required"
+    next(error);
+  } 
+  else if (typeof name !== "string") { 
+    error.message = "name of account must be a string"
+    next(error);
+  }
+  else if (name.trim().length < 3 || name.trim().length > 100) {
     error.message = "name of account must be between 3 and 100" 
     next(error);
   }
@@ -18,15 +26,12 @@ exports.checkAccountPayload = async (req, res, next) => {
     error.message = "budget of account is too large or too small"
     next(error);
   }
-  else if (name === undefined || budget === undefined) { 
-    error.message = "name and budget are required"
-    next(error);
-  } 
   next();
 }
 
 exports.checkAccountNameUnique = async (req, res, next) => {
   // DO YOUR MAGIC
+  const list = await getAll();
   if (await list.find(account => account.name === req.body.name)) {
     next({ status: 400, message: "that name is taken" })
   } else next();
@@ -35,7 +40,7 @@ exports.checkAccountNameUnique = async (req, res, next) => {
 exports.checkAccountId = async (req, res, next) => {
   // DO YOUR MAGIC
   const account = await getById(req.params.id);
-  if (account) { 
-    next();
-  } else next({ status: 404, message: 'account not found' })
+  if (!account) {
+    next({ status: 404, message: 'account not found' })
+  } else next();
 }
